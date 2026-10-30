@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>PCBVision AI - Detección Inteligente de Defectos en PCB con YOLO26</title>
+  <meta name="description" content="Plataforma de inspección óptica automatizada (AOI) con visión computacional y YOLO26 para la detección y clasificación de anomalías en circuitos impresos (PCB).">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Efectos de Fondo -->
+  <div class="bg-circuit-overlay"></div>
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Barra de Navegación -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="#hero" class="nav-brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-microchip"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">PCBVision<span class="highlight">.AI</span></span>
+          <span class="brand-subtitle">Inspección de Calidad</span>
+        </div>
+      </a>
+
+      <!-- Navegación -->
+      <nav class="nav-links" id="navLinks">
+        <a href="#hero" class="nav-link active">Inicio</a>
+        <a href="#defectos" class="nav-link">Defectos Soportados</a>
+        <a href="#analizador" class="nav-link">Analizador</a>
+        <a href="#proceso" class="nav-link">¿Cómo Funciona?</a>
+      </nav>
+
+      <div class="nav-actions">
+        <!-- Badge de Estado del Sistema -->
+        <div class="yolo-detector-badge" title="Sistema de Inspección en Línea">
+          <span class="yolo-tag">
+            <i class="fa-solid fa-microchip"></i> INSPECCIÓN
+          </span>
+          <span class="badge-separator"></span>
+          <span class="engine-state">
+            <span class="pulse-beacon"></span>
+            <span class="state-label">EN LÍNEA</span>
+          </span>
+        </div>
+
+        <a href="#analizador" class="btn btn-primary btn-sm nav-cta-btn">
+          <i class="fa-solid fa-crosshairs"></i> <span class="btn-text">Analizar</span>
+        </a>
+
+        <!-- Botón de Menú Mobile -->
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Abrir navegación">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO SECCIÓN -->
+    <section id="hero" class="hero-section">
+      <div class="container hero-container">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span class="badge-icon"><i class="fa-solid fa-microchip"></i></span>
+            <span>Inspección Óptica Inteligente con YOLO26</span>
+          </div>
+
+          <h1 class="hero-title">
+            Detección Precisa de <span class="gradient-text">Defectos en Placas PCB</span>
+          </h1>
+
+          <p class="hero-description">
+            Inspección Óptica Automatizada (AOI) de última generación impulsada por la arquitectura <strong>YOLO26</strong>.
+            Localiza y clasifica anomalías críticas como cortocircuitos, perforaciones faltantes
+            y cortes en pistas antes del ensamblaje electrónico.
+          </p>
+
+          <div class="hero-cta-group">
+            <a href="#analizador" class="btn btn-primary btn-lg">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <span>Cargar y Analizar PCB</span>
+            </a>
+            <a href="#defectos" class="btn btn-outline btn-lg">
+              <i class="fa-solid fa-list-check"></i>
+              <span>Defectos Catalogados</span>
+            </a>
+          </div>
+
+          <!-- Estadísticas del Hero -->
+          <div class="hero-stats">
+            <div class="stat-item">
+              <span class="stat-number">6</span>
+              <span class="stat-label">Clases de Defectos</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-number">YOLO26</span>
+              <span class="stat-label">Arquitectura IA</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-number">&lt; 50ms</span>
+              <span class="stat-label">Inferencia Ultrarrápida</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Interactivo -->
+        <div class="hero-visual">
+          <div class="pcb-preview-card">
+            <div class="card-glow-border"></div>
+            <div class="preview-header">
+              <div class="header-dots">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+              </div>
+              <div class="header-status">
+                <i class="fa-solid fa-satellite-dish"></i> YOLO26_REALTIME_STREAM
+              </div>
+            </div>
+
+            <div class="preview-viewport">
+              <!-- Animated PCB Graphic -->
+              <svg class="pcb-circuit-svg" viewBox="0 0 500 350" xmlns="http://www.w3.org/2000/svg">
+                <!-- PCB Green Board -->
+                <rect width="500" height="350" rx="14" fill="#0d2618" stroke="#1b4d32" stroke-width="2"/>
+                
+                <!-- Circuit Traces -->
+                <g stroke="#2bd67b" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round">
+                  <path d="M 30,50 L 120,50 L 160,90 L 260,90 L 300,50 L 470,50" />
+                  <path d="M 30,120 L 90,120 L 140,170 L 220,170 L 250,200 L 400,200" />
+                  <path d="M 80,290 L 180,290 L 220,250 L 330,250 L 370,290 L 470,290" />
+                  <path d="M 120,50 L 120,130 L 150,160" />
+                  <path d="M 320,320 L 320,240 L 380,180 L 470,180" />
+                  <path d="M 60,200 L 110,200 L 130,220 L 130,270" />
+                  <path d="M 280,120 L 340,120 L 360,100 L 450,100" />
+                </g>
+
+                <!-- IC Chips -->
+                <rect x="180" y="110" width="130" height="85" rx="6" fill="#0a120e" stroke="#34d399" stroke-width="1.5"/>
+                <text x="245" y="157" fill="#6ee7b7" font-family="'JetBrains Mono', monospace" font-size="11" text-anchor="middle" font-weight="600">YOLO26-CORE</text>
+                
+                <!-- IC Pins -->
+                <g fill="#eab308">
+                  <rect x="195" y="104" width="8" height="6" rx="1"/>
+                  <rect x="215" y="104" width="8" height="6" rx="1"/>
+                  <rect x="235" y="104" width="8" height="6" rx="1"/>
+                  <rect x="255" y="104" width="8" height="6" rx="1"/>
+                  <rect x="275" y="104" width="8" height="6" rx="1"/>
+
+                  <rect x="195" y="195" width="8" height="6" rx="1"/>
+                  <rect x="215" y="195" width="8" height="6" rx="1"/>
+                  <rect x="235" y="195" width="8" height="6" rx="1"/>
+                  <rect x="255" y="195" width="8" height="6" rx="1"/>
+                  <rect x="275" y="195" width="8" height="6" rx="1"/>
+                </g>
+
+                <!-- Vias / Solder Pads -->
+                <g fill="#fbbf24">
+                  <circle cx="50" cy="50" r="5" stroke="#10b981" stroke-width="2"/>
+                  <circle cx="160" cy="90" r="4"/>
+                  <circle cx="260" cy="90" r="4"/>
+                  <circle cx="90" cy="120" r="4"/>
+                  <circle cx="400" cy="200" r="5" stroke="#10b981" stroke-width="2"/>
+                  <circle cx="220" cy="250" r="4"/>
+                  <circle cx="330" cy="250" r="4"/>
+                  <circle cx="450" cy="100" r="5"/>
+                </g>
+
+                <!-- Short Circuit -->
+                <g class="detected-defect-box" transform="translate(130, 75)">
+                  <rect x="0" y="0" width="45" height="35" rx="3" fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" stroke-width="1.8" stroke-dasharray="3,3"/>
+                  <circle cx="22" cy="17" r="3" fill="#ef4444" />
+                </g>
+
+                <!-- Missing Hole -->
+                <g class="detected-defect-box" transform="translate(365, 235)">
+                  <rect x="0" y="0" width="40" height="40" rx="3" fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="3,3"/>
+                  <circle cx="20" cy="20" r="3" fill="#f59e0b" />
+                </g>
+              </svg>
+
+              <!-- Escáner láser -->
+              <div class="laser-scanner"></div>
+
+              <!-- Etiqueta de defectos -->
+              <div class="defect-badge-tag tag-1">
+                <span class="tag-dot red"></span>
+                <span><strong>short</strong> : 98.7%</span>
+              </div>
+
+              <div class="defect-badge-tag tag-2">
+                <span class="tag-dot amber"></span>
+                <span><strong>missing_hole</strong> : 94.2%</span>
+              </div>
+            </div>
+
+            <div class="preview-footer">
+              <div class="footer-metric">
+                <span class="label">Diagnóstico</span>
+                <span class="val danger"><i class="fa-solid fa-triangle-exclamation"></i> 2 Defectos</span>
+              </div>
+              <div class="footer-metric">
+                <span class="label">Red IA</span>
+                <span class="val">YOLO26-S</span>
+              </div>
+              <div class="footer-metric">
+                <span class="label">FPS</span>
+                <span class="val success">60 FPS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Catálogo de Defectos -->
+    <section id="defectos" class="defects-section">
+      <div class="container">
+        <div class="section-header text-center">
+          <div class="section-tag"><i class="fa-solid fa-microchip"></i> Clasificación Automatizada</div>
+          <h2 class="section-title">Defectos que Nuestro Modelo Identifica</h2>
+          <p class="section-subtitle">
+            Entrenado con YOLO26 sobre patrones microestructurales para clasificar las 6 anomalías más críticas en la fabricación de circuitos impresos.
+          </p>
+
+          <!-- Filtros de categoría de defectos -->
+          <div class="defects-filter-tabs">
+            <button class="defect-filter-btn active" data-filter="all">Todos (6)</button>
+            <button class="defect-filter-btn" data-filter="high"><span class="filter-dot red"></span> Severidad Alta (2)</button>
+            <button class="defect-filter-btn" data-filter="medium"><span class="filter-dot amber"></span> Severidad Media (2)</button>
+            <button class="defect-filter-btn" data-filter="low"><span class="filter-dot emerald"></span> Severidad Baja (2)</button>
+          </div>
+        </div>
+
+        <div class="defects-grid" id="defectsCatalogGrid">
+          <!-- Tarjeta 1: Cortocircuito -->
+          <div class="defect-card card-defect-short" data-severity="high">
+            <div class="defect-card-top">
+              <div class="defect-card-meta">
+                <span class="defect-index-badge">01</span>
+                <span class="defect-key">short</span>
+              </div>
+              <span class="severity-badge high"><span class="severity-dot"></span> Severidad Alta</span>
+            </div>
+
+            <!-- Mini esquema ilustrativo de la falla -->
+            <div class="defect-mini-schematic">
+              <svg viewBox="0 0 280 90" xmlns="http://www.w3.org/2000/svg">
+                <rect width="280" height="90" rx="8" fill="#08140e"/>
+                <!-- Pistas paralelas de cobre -->
+                <path d="M 20,30 L 260,30" stroke="#2bd67b" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+                <path d="M 20,60 L 260,60" stroke="#2bd67b" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+                <!-- Cortocircuito no deseado entre pistas -->
+                <path d="M 130,30 L 150,60" stroke="#ef4444" stroke-width="7" stroke-linecap="round"/>
+                <!-- Destello de sobretensión -->
+                <circle cx="140" cy="45" r="10" fill="rgba(239, 68, 68, 0.25)" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="2,2"/>
+                <circle cx="140" cy="45" r="3.5" fill="#ef4444"/>
+                <text x="162" y="49" fill="#ef4444" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">PUENTE</text>
+              </svg>
+              <div class="schematic-badge danger">CORTO DETECTADO</div>
+            </div>
+
+            <div class="defect-card-header">
+              <h3 class="defect-name">Cortocircuito</h3>
+            </div>
+            <p class="defect-desc">
+              Puente conductor no deseado entre dos pistas contiguas por exceso de cobre o estaño fundido, generando riesgo inminente de fallo eléctrico y combustión.
+            </p>
+
+            <div class="defect-tags-row">
+              <span class="defect-pill"><i class="fa-solid fa-triangle-exclamation"></i> Riesgo Eléctrico</span>
+              <span class="defect-pill"><i class="fa-solid fa-microchip"></i> Clase 3</span>
+            </div>
+
+            <div class="defect-card-footer">
+              <span class="tolerance-label">Tolerancia: <strong>0 mm (Crítico)</strong></span>
+              <a href="#analizador" class="defect-test-action" title="Probar análisis de cortocircuito">
+                Probar <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Tarjeta 2: Circuito Abierto -->
+          <div class="defect-card card-defect-open" data-severity="high">
+            <div class="defect-card-top">
+              <div class="defect-card-meta">
+                <span class="defect-index-badge">02</span>
+                <span class="defect-key">open_circuit</span>
+              </div>
+              <span class="severity-badge high"><span class="severity-dot"></span> Severidad Alta</span>
+            </div>
+
+            <!-- Mini esquema ilustrativo de la falla -->
+            <div class="defect-mini-schematic">
+              <svg viewBox="0 0 280 90" xmlns="http://www.w3.org/2000/svg">
+                <rect width="280" height="90" rx="8" fill="#08140e"/>
+                <!-- Pista interrumpida con corte -->
+                <path d="M 20,45 L 115,45" stroke="#2bd67b" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+                <path d="M 165,45 L 260,45" stroke="#2bd67b" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+                <!-- Zona de ruptura -->
+                <rect x="118" y="28" width="44" height="34" rx="4" fill="rgba(251, 146, 60, 0.15)" stroke="#fb923c" stroke-width="1.8" stroke-dasharray="3,3"/>
+                <line x1="126" y1="36" x2="154" y2="54" stroke="#fb923c" stroke-width="2"/>
+                <line x1="154" y1="36" x2="126" y2="54" stroke="#fb923c" stroke-width="2"/>
+                <text x="140" y="76" fill="#fb923c" font-family="'JetBrains Mono', monospace" font-size="8.5" text-anchor="middle" font-weight="700">CORTE FÍSICO</text>
+              </svg>
+              <div class="schematic-badge warning">PISTA ROTA</div>
+            </div>
+
+            <div class="defect-card-header">
+              <h3 class="defect-name">Circuito Abierto</h3>
+            </div>
+            <p class="defect-desc">
+              Ruptura o interrupción física en una pista de cobre que anula completamente la conducción eléctrica y la propagación de señales lógicas.
+            </p>
+
+            <div class="defect-tags-row">
+              <span class="defect-pill"><i class="fa-solid fa-scissors"></i> Pérdida de Línea</span>
+              <span class="defect-pill"><i class="fa-solid fa-microchip"></i> Clase 2</span>
+            </div>
+
+            <div class="defect-card-footer">
+              <span class="tolerance-label">Tolerancia: <strong>0 mm (Crítico)</strong></span>
+              <a href="#analizador" class="defect-test-action" title="Probar análisis de circuito abierto">
+                Probar <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Tarjeta 3: Perforación Faltante -->
+          <div class="defect-card card-defect-hole" data-severity="medium">
+            <div class="defect-card-top">
+              <div class="defect-card-meta">
+                <span class="defect-index-badge">03</span>
+                <span class="defect-key">missing_hole</span>
+              </div>
+              <span class="severity-badge medium"><span class="severity-dot"></span> Severidad Media</span>
+            </div>
+
+            <!-- Mini esquema ilustrativo de la falla -->
+            <div class="defect-mini-schematic">
+              <svg viewBox="0 0 280 90" xmlns="http://www.w3.org/2000/svg">
+                <rect width="280" height="90" rx="8" fill="#08140e"/>
+                <!-- Pistas convergentes -->
+                <path d="M 20,45 L 100,45" stroke="#2bd67b" stroke-width="7" stroke-linecap="round" opacity="0.6"/>
+                <path d="M 180,45 L 260,45" stroke="#2bd67b" stroke-width="7" stroke-linecap="round" opacity="0.6"/>
+                <!-- Pad anular sin orificio central taladrado -->
+                <circle cx="140" cy="45" r="24" fill="#d97706" opacity="0.45"/>
+                <circle cx="140" cy="45" r="16" fill="#fbbf24" stroke="#d97706" stroke-width="2"/>
+                <!-- Diana de orificio faltante -->
+                <circle cx="140" cy="45" r="8" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b" stroke-width="2" stroke-dasharray="2,2"/>
+                <line x1="140" y1="33" x2="140" y2="57" stroke="#f59e0b" stroke-width="1.5"/>
+                <line x1="128" y1="45" x2="152" y2="45" stroke="#f59e0b" stroke-width="1.5"/>
+                <text x="178" y="49" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700">SIN VIA</text>
+              </svg>
+              <div class="schematic-badge amber">OMISIÓN DRILL</div>
+            </div>
+
+            <div class="defect-card-header">
+              <h3 class="defect-name">Perforación Faltante</h3>
+            </div>
+            <p class="defect-desc">
+              Omisión del orificio de perforación pasante (via) o pad taladrado requerido para la inserción de pines o la continuidad entre capas múltiples.
+            </p>
+
+            <div class="defect-tags-row">
+              <span class="defect-pill"><i class="fa-solid fa-circle-dot"></i> Montaje THT</span>
+              <span class="defect-pill"><i class="fa-solid fa-microchip"></i> Clase 0</span>
+            </div>
+
+            <div class="defect-card-footer">
+              <span class="tolerance-label">Impacto: <strong>Incompatibilidad Capas</strong></span>
+              <a href="#analizador" class="defect-test-action" title="Probar análisis de perforación faltante">
+                Probar <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Tarjeta 4: Mordedura de Ratón -->
+          <div class="defect-card card-defect-bite" data-severity="medium">
+            <div class="defect-card-top">
+              <div class="defect-card-meta">
+                <span class="defect-index-badge">04</span>
+                <span class="defect-key">mouse_bite</span>
+              </div>
+              <span class="severity-badge medium"><span class="severity-dot"></span> Severidad Media</span>
+            </div>
+
+            <!-- Mini esquema ilustrativo de la falla -->
+            <div class="defect-mini-schematic">
+              <svg viewBox="0 0 280 90" xmlns="http://www.w3.org/2000/svg">
+                <rect width="280" height="90" rx="8" fill="#08140e"/>
+                <!-- Pista de cobre ancha -->
+                <path d="M 20,45 L 260,45" stroke="#2bd67b" stroke-width="18" stroke-linecap="round" opacity="0.6"/>
+                <!-- Muesca o mordedura en el borde -->
+                <circle cx="140" cy="36" r="11" fill="#08140e"/>
+                <path d="M 129,36 A 11 11 0 0 0 151,36" stroke="#c084fc" stroke-width="2.5" fill="none"/>
+                <!-- Indicador de cuello de botella -->
+                <rect x="124" y="24" width="32" height="42" rx="4" fill="rgba(192, 132, 252, 0.15)" stroke="#c084fc" stroke-width="1.5" stroke-dasharray="2,2"/>
+                <text x="168" y="38" fill="#c084fc" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700">MUESCA</text>
+              </svg>
+              <div class="schematic-badge purple">ADELGAZAMIENTO</div>
+            </div>
+
+            <div class="defect-card-header">
+              <h3 class="defect-name">Mordedura de Ratón</h3>
+            </div>
+            <p class="defect-desc">
+              Muesca o rebaje angular en los bordes de la pista que disminuye su ancho efectivo, elevando la densidad de corriente y generando puntos de sobrecalentamiento.
+            </p>
+
+            <div class="defect-tags-row">
+              <span class="defect-pill"><i class="fa-solid fa-temperature-arrow-up"></i> Riesgo Térmico</span>
+              <span class="defect-pill"><i class="fa-solid fa-microchip"></i> Clase 1</span>
+            </div>
+
+            <div class="defect-card-footer">
+              <span class="tolerance-label">Impacto: <strong>Efecto Joule</strong></span>
+              <a href="#analizador" class="defect-test-action" title="Probar análisis de mordedura de ratón">
+                Probar <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Tarjeta 5: Espuela o Rebaba -->
+          <div class="defect-card card-defect-spur" data-severity="low">
+            <div class="defect-card-top">
+              <div class="defect-card-meta">
+                <span class="defect-index-badge">05</span>
+                <span class="defect-key">spur</span>
+              </div>
+              <span class="severity-badge low"><span class="severity-dot"></span> Severidad Baja</span>
+            </div>
+
+            <!-- Mini esquema ilustrativo de la falla -->
+            <div class="defect-mini-schematic">
+              <svg viewBox="0 0 280 90" xmlns="http://www.w3.org/2000/svg">
+                <rect width="280" height="90" rx="8" fill="#08140e"/>
+                <!-- Dos pistas paralelas -->
+                <path d="M 20,28 L 260,28" stroke="#2bd67b" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+                <path d="M 20,64 L 260,64" stroke="#2bd67b" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+                <!-- Espuela puntiaguda invadiendo aislamiento -->
+                <polygon points="135,28 145,52 148,28" fill="#38bdf8"/>
+                <circle cx="145" cy="52" r="3" fill="#38bdf8"/>
+                <line x1="145" y1="52" x2="145" y2="60" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="2,2"/>
+                <text x="160" y="47" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700">REBABA</text>
+              </svg>
+              <div class="schematic-badge cyan">PROTUBERANCIA</div>
+            </div>
+
+            <div class="defect-card-header">
+              <h3 class="defect-name">Espuela o Rebaba</h3>
+            </div>
+            <p class="defect-desc">
+              Saliente metálica o rebaba puntiaguda que sobresale hacia el canal aislante intermedio, reduciendo peligrosamente la distancia de seguridad entre pistas.
+            </p>
+
+            <div class="defect-tags-row">
+              <span class="defect-pill"><i class="fa-solid fa-ruler-horizontal"></i> Canal Reducido</span>
+              <span class="defect-pill"><i class="fa-solid fa-microchip"></i> Clase 4</span>
+            </div>
+
+            <div class="defect-card-footer">
+              <span class="tolerance-label">Impacto: <strong>Aislamiento Inestable</strong></span>
+              <a href="#analizador" class="defect-test-action" title="Probar análisis de espuela">
+                Probar <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Tarjeta 6: Cobre Espurio -->
+          <div class="defect-card card-defect-copper" data-severity="low">
+            <div class="defect-card-top">
+              <div class="defect-card-meta">
+                <span class="defect-index-badge">06</span>
+                <span class="defect-key">spurious_copper</span>
+              </div>
+              <span class="severity-badge low"><span class="severity-dot"></span> Severidad Baja</span>
+            </div>
+
+            <!-- Mini esquema ilustrativo de la falla -->
+            <div class="defect-mini-schematic">
+              <svg viewBox="0 0 280 90" xmlns="http://www.w3.org/2000/svg">
+                <rect width="280" height="90" rx="8" fill="#08140e"/>
+                <!-- Pistas y zona dieléctrica central -->
+                <path d="M 20,24 L 260,24" stroke="#2bd67b" stroke-width="7" stroke-linecap="round" opacity="0.6"/>
+                <path d="M 20,68 L 260,68" stroke="#2bd67b" stroke-width="7" stroke-linecap="round" opacity="0.6"/>
+                <!-- Islas flotantes de cobre no disuelto -->
+                <circle cx="110" cy="46" r="5" fill="#34d399"/>
+                <circle cx="138" cy="42" r="7" fill="#34d399"/>
+                <circle cx="162" cy="50" r="4.5" fill="#34d399"/>
+                <rect x="98" y="34" width="78" height="24" rx="4" fill="rgba(52, 211, 153, 0.12)" stroke="#34d399" stroke-width="1.5" stroke-dasharray="3,3"/>
+                <text x="186" y="49" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700">RESIDUOS</text>
+              </svg>
+              <div class="schematic-badge emerald">ISLAS COBRE</div>
+            </div>
+
+            <div class="defect-card-header">
+              <h3 class="defect-name">Cobre Espurio</h3>
+            </div>
+            <p class="defect-desc">
+              Residuos flotantes o islas microscópicas de cobre no disueltas por grabado químico deficiente, susceptibles de desprenderse y generar fallas aleatorias.
+            </p>
+
+            <div class="defect-tags-row">
+              <span class="defect-pill"><i class="fa-solid fa-atom"></i> Residuo Químico</span>
+              <span class="defect-pill"><i class="fa-solid fa-microchip"></i> Clase 5</span>
+            </div>
+
+            <div class="defect-card-footer">
+              <span class="tolerance-label">Impacto: <strong>Contaminación Resina</strong></span>
+              <a href="#analizador" class="defect-test-action" title="Probar análisis de cobre espurio">
+                Probar <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN DE INTERFAZ DE DETECCIÓN -->
+    <section id="analizador" class="analyzer-section">
+      <div class="container">
+        <div class="section-header text-center">
+          <div class="section-tag"><i class="fa-solid fa-microscope"></i> Laboratorio de Inspección</div>
+          <h2 class="section-title">Sube y Diagnostica tu Placa PCB</h2>
+          <p class="section-subtitle">
+            Carga una fotografía de tu circuito. La red neuronal YOLO26 analizará cada sector y localizará las anomalías detectadas.
+          </p>
+        </div>
+
+        <div class="analyzer-wrapper">
+          <!-- Visor de Imagen y Detección -->
+          <div class="analyzer-viewport-card">
+            
+            <!-- Estado Inicial: Dropzone -->
+            <div id="dropzone" class="upload-dropzone">
+              <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg" class="file-hidden-input">
+              
+              <div class="dropzone-content">
+                <div class="dropzone-icon-ring">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <h3 class="dropzone-title">Arrastra y suelta tu placa aquí</h3>
+                <p class="dropzone-hint">Formatos soportados: PNG, JPG, JPEG (Hasta 15MB)</p>
+                
+                <div class="dropzone-buttons">
+                  <button type="button" class="btn btn-primary" id="btnSelectFile">
+                    <i class="fa-solid fa-folder-open"></i> Explorar Archivo
+                  </button>
+                  <button type="button" class="btn btn-outline" id="btnLoadSample" title="Cargar placa de ejemplo">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Probar con Ejemplo
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado Activo: Visor de Imagen y Detección -->
+            <div id="inspectionViewer" class="inspection-viewer hidden">
+              <div class="viewer-toolbar">
+                <div class="toolbar-info">
+                  <i class="fa-regular fa-image"></i>
+                  <span id="loadedFileName" class="filename-text">pcb_sample_test.jpg</span>
+                  <span class="file-size-tag" id="loadedFileSize">31.7 KB</span>
+                </div>
+                <div class="toolbar-actions">
+                  <!-- Controles de Zoom & Lupa -->
+                  <div class="zoom-controls-wrapper" title="Controles de Zoom y Lupa">
+                    <button type="button" id="btnZoomOut" class="tool-btn zoom-btn" title="Alejar (Zoom -)">
+                      <i class="fa-solid fa-magnifying-glass-minus"></i>
+                    </button>
+                    <span id="zoomLevelBadge" class="zoom-level-badge" title="Nivel de zoom actual (O usa la rueda del ratón)">100%</span>
+                    <button type="button" id="btnZoomIn" class="tool-btn zoom-btn" title="Acercar (Zoom +)">
+                      <i class="fa-solid fa-magnifying-glass-plus"></i>
+                    </button>
+                    <button type="button" id="btnZoomReset" class="tool-btn zoom-btn" title="Restablecer vista (100%)">
+                      <i class="fa-solid fa-arrows-rotate"></i>
+                    </button>
+                  </div>
+
+                  <span class="toolbar-divider"></span>
+
+                  <button type="button" id="btnToggleBoxes" class="tool-btn active" title="Alternar visibilidad de cajas de detección">
+                    <i class="fa-solid fa-vector-square"></i> Cajas
+                  </button>
+                  <button type="button" id="btnToggleLabels" class="tool-btn active" title="Alternar nombres de fallas (Oculta texto si tapa los cuadros)">
+                    <i class="fa-solid fa-tags"></i> Etiquetas
+                  </button>
+                  <button type="button" id="btnResetUpload" class="tool-btn danger" title="Cargar otra imagen">
+                    <i class="fa-solid fa-trash-can"></i> Cambiar
+                  </button>
+                </div>
+              </div>
+
+              <!-- Área de visualización de la imagen -->
+              <div class="viewer-canvas-wrapper" id="canvasWrapper">
+                <div class="image-stage" id="imageStage">
+                  <img id="previewImage" src="" alt="PCB a inspeccionar" class="preview-img">
+                  
+                  <!-- Capa interactiva de cajas delimitadoras generadas -->
+                  <div id="detectionOverlay" class="detection-overlay"></div>
+                </div>
+
+                <!-- Barra Láser de escaneo animada durante inferencia -->
+                <div id="scannerBar" class="active-scan-bar hidden"></div>
+
+                <!-- Ayuda contextual flotante de zoom y paneo -->
+                <div class="canvas-zoom-hint" id="zoomHint">
+                  <i class="fa-solid fa-magnifying-glass"></i> Rueda: Zoom &bull; Arrastra para moverte &bull; Clic en lista para enfocar
+                </div>
+              </div>
+
+              <!-- Botón disparador de análisis -->
+              <div class="viewer-bottom-bar">
+                <button id="btnRunInference" class="btn btn-primary btn-block">
+                  <i class="fa-solid fa-bolt-lightning"></i>
+                  <span id="btnRunInferenceText">Ejecutar Diagnóstico</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Panel de diagnóstico -->
+          <div class="analyzer-results-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Reporte de Inspección</span>
+              </div>
+              <span id="statusIndicatorBadge" class="status-badge waiting">En espera</span>
+            </div>
+
+            <div class="panel-body">
+              <!-- Estado vacío -->
+              <div id="resultsEmptyState" class="empty-state">
+                <div class="empty-icon">
+                  <i class="fa-solid fa-microchip"></i>
+                </div>
+                <h4>Ninguna imagen analizada aún</h4>
+                <p>Carga una fotografía de tu placa o prueba con la muestra y pulsa "Ejecutar Diagnóstico" para ver el informe de anomalías.</p>
+              </div>
+
+              <!-- RESULTADOS -->
+              <div id="resultsContent" class="results-content hidden">
+                <div class="summary-metrics-grid">
+                  <div class="metric-box">
+                    <span class="metric-title">Defectos</span>
+                    <span class="metric-value danger" id="metricDefectCount">0</span>
+                  </div>
+                  <div class="metric-box">
+                    <span class="metric-title">Confianza Media</span>
+                    <span class="metric-value" id="metricAvgConfidence">0%</span>
+                  </div>
+                  <div class="metric-box">
+                    <span class="metric-title">Inferencia</span>
+                    <span class="metric-value success" id="metricInferenceTime">0 ms</span>
+                  </div>
+                  <div class="metric-box">
+                    <span class="metric-title">Estado de la Placa</span>
+                    <span class="metric-value" id="metricVerdict">--</span>
+                    <span class="metric-subtext" id="metricVerdictSubtext">En espera</span>
+                  </div>
+                </div>
+
+                <!-- Lista de defectos encontrados -->
+                <div class="defect-findings-section">
+                  <h4 class="findings-heading">
+                    <span>Anomalías Localizadas</span>
+                    <span class="findings-count" id="findingsCountBadge">0</span>
+                  </h4>
+                  
+                  <div class="findings-list" id="findingsList">
+                  </div>
+                </div>
+
+                <!-- Exportar / Acciones -->
+                <div class="results-actions">
+                  <button id="btnDownloadReport" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-file-pdf"></i> Descargar Reporte PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Nota de Garantía de Calidad -->
+            <div class="panel-footer-note">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span>Inspección óptica de precisión con evaluación y reporte de estándares de calidad.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN METODOLOGÍA -->
+    <section id="proceso" class="process-section">
+      <div class="container">
+        <div class="section-header text-center">
+          <div class="section-tag"><i class="fa-solid fa-diagram-project"></i> Pipeline de Detección</div>
+          <h2 class="section-title">¿Cómo Opera el Sistema de Detección?</h2>
+          <p class="section-subtitle">
+            Flujo secuencial de inspección óptica automatizada (AOI) impulsado por YOLO26 para líneas de manufactura electrónica de alta velocidad.
+          </p>
+        </div>
+
+        <!-- Flujo interactivo del pipeline -->
+        <div class="pipeline-track-wrapper">
+          <div class="pipeline-progress-line"></div>
+          
+          <div class="process-steps-grid">
+            <!-- Fase 1 -->
+            <div class="step-card step-card-1">
+              <div class="step-header-row">
+                <div class="step-icon step-icon-1">
+                  <i class="fa-solid fa-camera"></i>
+                </div>
+                <div class="step-badge-num">FASE 01</div>
+              </div>
+              <div class="step-tag-pill">ADQUISICIÓN ÓPTICA</div>
+              <h3 class="step-title">Captura & Calibración</h3>
+              <p class="step-desc">
+                Adquisición macroscópica de la placa PCB. Se realiza balance cromático, reducción de ruido espectral y normalización a resolución de inferencia.
+              </p>
+              <div class="step-chips-group">
+                <span class="step-chip"><i class="fa-solid fa-microscope"></i> Macro 4K</span>
+                <span class="step-chip"><i class="fa-solid fa-sliders"></i> Normalización</span>
+              </div>
+            </div>
+
+            <!-- Fase 2 -->
+            <div class="step-card step-card-2">
+              <div class="step-header-row">
+                <div class="step-icon step-icon-2">
+                  <i class="fa-solid fa-brain"></i>
+                </div>
+                <div class="step-badge-num">FASE 02</div>
+              </div>
+              <div class="step-tag-pill">PROCESAMIENTO NEURONAL</div>
+              <h3 class="step-title">Inferencia con YOLO26</h3>
+              <p class="step-desc">
+                La arquitectura profunda YOLO26 procesa los patrones geométricos mediante capas convolucionales y Feature Pyramid Networks a nivel de píxel.
+              </p>
+              <div class="step-chips-group">
+                <span class="step-chip"><i class="fa-solid fa-network-wired"></i> Deep CNN</span>
+                <span class="step-chip"><i class="fa-solid fa-bolt"></i> YOLO26 Core</span>
+              </div>
+            </div>
+
+            <!-- Fase 3 -->
+            <div class="step-card step-card-3">
+              <div class="step-header-row">
+                <div class="step-icon step-icon-3">
+                  <i class="fa-solid fa-vector-square"></i>
+                </div>
+                <div class="step-badge-num">FASE 03</div>
+              </div>
+              <div class="step-tag-pill">DISCRIMINACIÓN IA</div>
+              <h3 class="step-title">Bounding Boxes & NMS</h3>
+              <p class="step-desc">
+                Filtrado por Non-Maximum Suppression (NMS) para discriminar falsos positivos, delimitando las coordenadas milimétricas y certeza de cada anomalía.
+              </p>
+              <div class="step-chips-group">
+                <span class="step-chip"><i class="fa-solid fa-filter"></i> Filtro NMS</span>
+                <span class="step-chip"><i class="fa-solid fa-crosshairs"></i> IoU &gt; 0.50</span>
+              </div>
+            </div>
+
+            <!-- Fase 4 -->
+            <div class="step-card step-card-4">
+              <div class="step-header-row">
+                <div class="step-icon step-icon-4">
+                  <i class="fa-solid fa-clipboard-check"></i>
+                </div>
+                <div class="step-badge-num">FASE 04</div>
+              </div>
+              <div class="step-tag-pill">DICTAMEN AUTOMATIZADO</div>
+              <h3 class="step-title">Diagnóstico & Auditoría</h3>
+              <p class="step-desc">
+                Clasificación de severidad y evaluación de conformidad para determinar la aprobación o desvío a retrabajo, con exportación técnica a PDF.
+              </p>
+              <div class="step-chips-group">
+                <span class="step-chip"><i class="fa-solid fa-shield-check"></i> Dictamen AOI</span>
+                <span class="step-chip"><i class="fa-solid fa-file-pdf"></i> Reporte PDF</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-brand-col">
+        <div class="footer-brand">
+          <i class="fa-solid fa-microchip"></i>
+          <span>PCBVision<strong>.AI</strong></span>
+        </div>
+        <p class="footer-tagline">
+          Proyecto de Inteligencia Artificial & Detección de Defectos en PCB mediante <strong>YOLO26</strong> — Solano G. & Muñoz J.
+        </p>
+      </div>
+
+      <div class="footer-links-col">
+        <span class="col-title">Secciones</span>
+        <a href="#hero">Inicio</a>
+        <a href="#defectos">Catálogo de Defectos</a>
+        <a href="#analizador">Laboratorio de Carga</a>
+        <a href="#proceso">Metodología YOLO26</a>
+      </div>
+
+      <div class="footer-links-col">
+        <span class="col-title">Tecnologías</span>
+        <span>YOLO26 Object Detection</span>
+        <span>Python</span>
+        <span>OpenCV</span>
+        <span>FastAPI / Flask Backend</span>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="container bottom-content">
+        <p>&copy; 2026 PCBVision AI — Control de Calidad en Circuitos Impresos. Todos los derechos reservados.</p>
+        <div class="footer-status-pill">
+          <span class="pulse-indicator"></span> YOLO26 Pipeline Ready
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast">
+    <i class="toast-icon fa-solid fa-circle-check"></i>
+    <span class="toast-msg">Mensaje del sistema</span>
+  </div>
+
+  <!-- jsPDF & AutoTable for PDF Report Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Scripts -->
+  <script src="script.js"></script>
+</body>
+</html>
