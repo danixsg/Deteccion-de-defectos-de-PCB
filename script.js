@@ -438,10 +438,23 @@ document.addEventListener('DOMContentLoaded', () => {
     clearDetections();
 
     try {
-      // 1. Obtener la imagen directamente del visor en formato Base64
-      let base64Image = previewImage.src;
-      // Roboflow requiere el texto base64 limpio, sin el prefijo data:image/jpeg;base64,
-      const base64Data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
+      let base64Data = "";
+
+      // 1. Obtener la imagen y asegurar que esté en formato Base64
+      if (previewImage.src.startsWith('data:')) {
+        // Es una imagen subida manualmente (ya está en Base64)
+        base64Data = previewImage.src.split(',')[1];
+      } else {
+        // Es la imagen de muestra (es una URL). La descargamos y convertimos a Base64.
+        const res = await fetch(previewImage.src);
+        const blob = await res.blob();
+        const dataUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+        base64Data = dataUrl.split(',')[1];
+      }
 
       // 2. Construir la URL (con un límite de confianza del 20%)
       const roboflowUrl = `https://detect.roboflow.com/${ROBOFLOW_MODEL}/${ROBOFLOW_VERSION}?api_key=${ROBOFLOW_API_KEY}&confidence=20`;
