@@ -1,7 +1,14 @@
 /**
  * PCBVision AI - Script de Interacción y Simulación de Diagnóstico con YOLO26
- * Diseñado para integración con backend Flask/FastAPI
+ * Adaptado para usar la API Cloud de Roboflow directamente (Sin Backend)
  */
+
+// ==========================================
+// CONFIGURACIÓN DE ROBOFLOW (¡Cámbialo por tus datos!)
+// ==========================================
+const ROBOFLOW_MODEL = "TU_ID_DE_MODELO"; // ej: "pcb-defects-xyz"
+const ROBOFLOW_VERSION = "1";             // Número de versión en Roboflow
+const ROBOFLOW_API_KEY = "TU_API_KEY";    // Tu clave secreta privada de Roboflow
 
 document.addEventListener('DOMContentLoaded', () => {
   // Mobile Navigation Elements
@@ -100,7 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let panStartX = 0;
   let panStartY = 0;
 
-  // Defect metadata definition matching data.yaml (YOLO26 Dataset)
+  // Defect metadata definition
+  // IMPORTANTE: Asegúrate de que las llaves (ej: 'missing_hole') coincidan exactamente con cómo las llamaste en Roboflow.
   const DEFECT_INFO = {
     missing_hole: { name: 'Perforación Faltante', color: '#f59e0b', badgeClass: 'hole' },
     mouse_bite: { name: 'Mordedura de Ratón', color: '#c084fc', badgeClass: 'bite' },
@@ -200,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnToggleBoxes.classList.toggle('active', boxesVisible);
   });
 
-  // Toggle Text Labels (para despejar los recuadros si chocan)
+  // Toggle Text Labels
   if (btnToggleLabels) {
     btnToggleLabels.addEventListener('click', () => {
       labelsVisible = !labelsVisible;
@@ -246,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const wrapW = canvasWrapper.clientWidth || 500;
     const wrapH = canvasWrapper.clientHeight || 440;
 
-    // Límites de desplazamiento con margen de holgura
     const maxPanX = Math.max(0, (stageW * zoomLevel - wrapW) / 2 + 120);
     const maxPanY = Math.max(0, (stageH * zoomLevel - wrapH) / 2 + 120);
 
@@ -291,7 +298,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const stageW = imageStage.offsetWidth || 416;
     const stageH = imageStage.offsetHeight || 416;
 
-    // Centrar el defecto con aumento de 2.8x
     const targetZoom = 2.8;
     const defectOffsetX = (item.xCenter - 0.5) * stageW;
     const defectOffsetY = (item.yCenter - 0.5) * stageH;
@@ -316,18 +322,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (btnZoomIn) {
-    btnZoomIn.addEventListener('click', () => setZoom(zoomLevel + 0.35));
-  }
-  if (btnZoomOut) {
-    btnZoomOut.addEventListener('click', () => setZoom(zoomLevel - 0.35));
-  }
-  if (btnZoomReset) {
-    btnZoomReset.addEventListener('click', () => resetZoom());
-  }
+  if (btnZoomIn) btnZoomIn.addEventListener('click', () => setZoom(zoomLevel + 0.35));
+  if (btnZoomOut) btnZoomOut.addEventListener('click', () => setZoom(zoomLevel - 0.35));
+  if (btnZoomReset) btnZoomReset.addEventListener('click', () => resetZoom());
 
   if (canvasWrapper) {
-    // Zoom con rueda de ratón centrado suavemente en el cursor
     canvasWrapper.addEventListener('wheel', (e) => {
       e.preventDefault();
       const step = 0.25;
@@ -335,7 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
       setZoom(newZoom, e.clientX, e.clientY);
     }, { passive: false });
 
-    // Doble clic para alternar zoom rápido
     canvasWrapper.addEventListener('dblclick', (e) => {
       if (zoomLevel > 1.1) {
         resetZoom();
@@ -344,7 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Arrastre con clic izquierdo para paneo
     canvasWrapper.addEventListener('mousedown', (e) => {
       if (zoomLevel <= 1.01) return;
       if (e.button !== 0) return;
@@ -374,7 +371,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Soporte para gestos táctiles (Pinch to zoom y arrastre en tabletas/móviles)
     let touchStartDist = 0;
     let touchStartZoom = 1;
     canvasWrapper.addEventListener('touchstart', (e) => {
@@ -418,57 +414,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Inferencia con Modelo best.pt Entrenado (API Backend)
+  // Inferencia con Roboflow API
   // ==========================================
-  function dataURItoBlob(dataURI) {
-    try {
-      const parts = dataURI.split(',');
-      const byteString = atob(parts[1]);
-      const mimeString = parts[0].split(':')[1].split(';')[0];
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-      }
-      return new Blob([ab], { type: mimeString });
-    } catch (e) {
-      console.warn('Error al convertir DataURI a Blob:', e);
-      return null;
-    }
-  }
 
-  function getApiCandidates(endpoint) {
-    const list = [];
-    if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-      list.push(`${window.location.origin}${endpoint}`);
-    }
-    list.push(`http://127.0.0.1:5000${endpoint}`);
-    list.push(`http://localhost:5000${endpoint}`);
-    return list;
+  // Marcamos el motor como ONLINE por defecto ya que usamos Roboflow
+  const engineState = document.querySelector('.yolo-detector-badge .engine-state');
+  if (engineState) {
+    engineState.innerHTML = `<span class="pulse-beacon" style="background:#10b981;box-shadow:0 0 10px #10b981;"></span> API ROBOFLOW`;
   }
-
-  async function checkBackendStatus() {
-    const candidates = getApiCandidates('/api/status');
-    for (const url of candidates) {
-      try {
-        const res = await fetch(url, { method: 'GET', cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          const engineState = document.querySelector('.yolo-detector-badge .engine-state');
-          if (engineState) {
-            engineState.innerHTML = `<span class="pulse-beacon" style="background:#10b981;box-shadow:0 0 10px #10b981;"></span> ONLINE`;
-          }
-          return true;
-        }
-      } catch (e) {
-        // Continuar al siguiente candidato
-      }
-    }
-    return false;
-  }
-
-  // Comprobar estado inicial del servidor backend
-  checkBackendStatus();
 
   btnRunInference.addEventListener('click', async () => {
     if (!currentFile && !isSample && !previewImage.src) {
@@ -478,69 +431,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Estado visual de procesamiento
     btnRunInference.disabled = true;
-    btnRunInferenceText.textContent = 'Analizando placa...';
+    btnRunInferenceText.textContent = 'Analizando en la nube...';
     scannerBar.classList.remove('hidden');
     statusBadge.className = 'status-badge analyzing';
     statusBadge.textContent = 'Inferencia en progreso...';
     clearDetections();
 
     try {
-      const formData = new FormData();
-      formData.append('confidence', '0.20');
+      // 1. Obtener la imagen directamente del visor en formato Base64
+      let base64Image = previewImage.src;
+      // Roboflow requiere el texto base64 limpio, sin el prefijo data:image/jpeg;base64,
+      const base64Data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
 
-      if (isSample) {
-        formData.append('isSample', 'true');
-      } else if (currentFile instanceof File || currentFile instanceof Blob) {
-        formData.append('file', currentFile, currentFile.name || 'pcb.jpg');
-      } else if (previewImage.src && previewImage.src.startsWith('data:')) {
-        const blob = dataURItoBlob(previewImage.src);
-        if (blob) {
-          formData.append('file', blob, 'pcb_upload.jpg');
-        } else {
-          formData.append('image', previewImage.src);
-        }
-      } else if (previewImage.src) {
-        formData.append('image', previewImage.src);
-      }
+      // 2. Construir la URL (con un límite de confianza del 20%)
+      const roboflowUrl = `https://detect.roboflow.com/${ROBOFLOW_MODEL}/${ROBOFLOW_VERSION}?api_key=${ROBOFLOW_API_KEY}&confidence=20`;
 
-      const endpoints = getApiCandidates('/api/predict');
-      let response = null;
-      let lastError = null;
+      // 3. Enviar la imagen a la API
+      const response = await fetch(roboflowUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: base64Data
+      });
 
-      for (const endpoint of endpoints) {
-        try {
-          const res = await fetch(endpoint, {
-            method: 'POST',
-            body: formData
-          });
-          if (res.ok) {
-            response = res;
-            break;
-          } else {
-            const errJson = await res.json().catch(() => null);
-            lastError = new Error(errJson && errJson.error ? errJson.error : `Error HTTP ${res.status}`);
-          }
-        } catch (fetchErr) {
-          lastError = fetchErr;
-        }
-      }
-
-      if (!response) {
-        throw lastError || new Error('No se pudo conectar con el servidor backend en http://localhost:5000');
+      if (!response.ok) {
+        throw new Error(`Error de conexión con Roboflow: ${response.status}`);
       }
 
       const data = await response.json();
 
-      if (!data.success) {
-        throw new Error(data.error || 'Error al procesar la imagen');
-      }
+      // 4. Transformar los datos: Roboflow envía Píxeles, el renderizador requiere Porcentajes
+      const imgWidth = previewImage.naturalWidth || 1;
+      const imgHeight = previewImage.naturalHeight || 1;
 
-      const detections = data.detections || [];
-      const inferenceTimeMs = data.inference_time_ms || 35;
+      const detections = data.predictions.map(pred => ({
+        class: pred.class,               
+        confidence: pred.confidence,
+        xCenter: pred.x / imgWidth,      
+        yCenter: pred.y / imgHeight,     
+        width: pred.width / imgWidth,    
+        height: pred.height / imgHeight  
+      }));
+
+      const inferenceTimeMs = data.time ? Math.round(data.time * 1000) : 45;
 
       currentDetections = detections;
       renderDetections(detections);
-      updateReportPanel(detections, inferenceTimeMs, data);
+      updateReportPanel(detections, inferenceTimeMs);
 
       if (detections.length > 0) {
         showToast(`Diagnóstico: Placa DEFECTUOSA (${detections.length} defecto(s) detectado(s))`, 'fa-triangle-exclamation');
@@ -549,8 +487,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
     } catch (error) {
-      console.error('Error de inferencia con el modelo:', error);
-      showToast('Error de conexión con el backend', 'fa-circle-xmark');
+      console.error('Error de inferencia con Roboflow:', error);
+      showToast('Error de conexión con el modelo', 'fa-circle-xmark');
       statusBadge.className = 'status-badge waiting';
       statusBadge.textContent = 'Error de conexión';
     } finally {
@@ -570,7 +508,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     detectionOverlay.classList.remove('has-hover');
 
-    // 1. Mapear todas las cajas en coordenadas porcentuales (0 - 100)
     const boxesData = detections.map((d, index) => {
       const widthPct = d.width * 100;
       const heightPct = d.height * 100;
@@ -588,7 +525,6 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    // Función auxiliar para verificar si dos rectángulos porcentuales se solapan
     function rectsOverlap(r1, r2, padding = 1.0) {
       return !(
         r1.right + padding < r2.left ||
@@ -599,8 +535,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const placedLabels = [];
-    const estLabelW = 26; // Ancho estimado de la etiqueta en porcentaje
-    const estLabelH = 5.2; // Alto estimado de la etiqueta en porcentaje
+    const estLabelW = 26; 
+    const estLabelH = 5.2; 
 
     boxesData.forEach((boxItem) => {
       const item = boxItem.data;
@@ -612,7 +548,6 @@ document.addEventListener('DOMContentLoaded', () => {
       box.dataset.index = index;
       box.title = `#${index + 1}: ${info.name} (${(item.confidence * 100).toFixed(1)}%) - Clic para hacer zoom`;
 
-      // Posicionamiento porcentual exacto sobre la falla
       box.style.left = `${boxItem.left.toFixed(3)}%`;
       box.style.top = `${boxItem.top.toFixed(3)}%`;
       box.style.width = `${boxItem.width.toFixed(3)}%`;
@@ -621,63 +556,13 @@ document.addEventListener('DOMContentLoaded', () => {
       box.style.backgroundColor = hexToRgba(info.color, 0.22);
       box.style.boxShadow = `0 0 10px ${hexToRgba(info.color, 0.7)}`;
 
-      // Posicionamiento anticolisión inteligente de etiquetas:
-      // Evalúa 6 candidatos y elige el que NUNCA tape otro recuadro ni choque con otras etiquetas
       const candidates = [
-        {
-          name: 'top-left',
-          className: 'pos-top-left',
-          left: boxItem.left,
-          right: boxItem.left + estLabelW,
-          top: boxItem.top - estLabelH - 1,
-          bottom: boxItem.top - 1,
-          baseScore: 0
-        },
-        {
-          name: 'bottom-left',
-          className: 'pos-bottom-left',
-          left: boxItem.left,
-          right: boxItem.left + estLabelW,
-          top: boxItem.bottom + 1,
-          bottom: boxItem.bottom + estLabelH + 1,
-          baseScore: 4
-        },
-        {
-          name: 'top-right',
-          className: 'pos-top-right',
-          left: Math.max(0, boxItem.right - estLabelW),
-          right: boxItem.right,
-          top: boxItem.top - estLabelH - 1,
-          bottom: boxItem.top - 1,
-          baseScore: 8
-        },
-        {
-          name: 'bottom-right',
-          className: 'pos-bottom-right',
-          left: Math.max(0, boxItem.right - estLabelW),
-          right: boxItem.right,
-          top: boxItem.bottom + 1,
-          bottom: boxItem.bottom + estLabelH + 1,
-          baseScore: 12
-        },
-        {
-          name: 'right',
-          className: 'pos-right',
-          left: boxItem.right + 1,
-          right: boxItem.right + estLabelW + 1,
-          top: boxItem.top,
-          bottom: boxItem.top + estLabelH,
-          baseScore: 18
-        },
-        {
-          name: 'left',
-          className: 'pos-left',
-          left: Math.max(0, boxItem.left - estLabelW - 1),
-          right: boxItem.left - 1,
-          top: boxItem.top,
-          bottom: boxItem.top + estLabelH,
-          baseScore: 22
-        }
+        { name: 'top-left', className: 'pos-top-left', left: boxItem.left, right: boxItem.left + estLabelW, top: boxItem.top - estLabelH - 1, bottom: boxItem.top - 1, baseScore: 0 },
+        { name: 'bottom-left', className: 'pos-bottom-left', left: boxItem.left, right: boxItem.left + estLabelW, top: boxItem.bottom + 1, bottom: boxItem.bottom + estLabelH + 1, baseScore: 4 },
+        { name: 'top-right', className: 'pos-top-right', left: Math.max(0, boxItem.right - estLabelW), right: boxItem.right, top: boxItem.top - estLabelH - 1, bottom: boxItem.top - 1, baseScore: 8 },
+        { name: 'bottom-right', className: 'pos-bottom-right', left: Math.max(0, boxItem.right - estLabelW), right: boxItem.right, top: boxItem.bottom + 1, bottom: boxItem.bottom + estLabelH + 1, baseScore: 12 },
+        { name: 'right', className: 'pos-right', left: boxItem.right + 1, right: boxItem.right + estLabelW + 1, top: boxItem.top, bottom: boxItem.top + estLabelH, baseScore: 18 },
+        { name: 'left', className: 'pos-left', left: Math.max(0, boxItem.left - estLabelW - 1), right: boxItem.left - 1, top: boxItem.top, bottom: boxItem.top + estLabelH, baseScore: 22 }
       ];
 
       let bestCandidate = candidates[0];
@@ -686,25 +571,18 @@ document.addEventListener('DOMContentLoaded', () => {
       for (const cand of candidates) {
         let score = cand.baseScore;
 
-        // Penalizar salir de los bordes del visor
         if (cand.top < 0) score += 500 + Math.abs(cand.top) * 30;
         if (cand.bottom > 100) score += 500 + (cand.bottom - 100) * 30;
         if (cand.left < 0) score += 300 + Math.abs(cand.left) * 20;
         if (cand.right > 100) score += 300 + (cand.right - 100) * 20;
 
-        // Evitar estrictamente que tape CUALQUIER otro recuadro de defecto (prioridad absoluta)
         for (let j = 0; j < boxesData.length; j++) {
           if (j === index) continue;
-          if (rectsOverlap(cand, boxesData[j], 1.2)) {
-            score += 2500;
-          }
+          if (rectsOverlap(cand, boxesData[j], 1.2)) score += 2500;
         }
 
-        // Evitar que choque o se solape con etiquetas ya ubicadas
         for (const placed of placedLabels) {
-          if (rectsOverlap(cand, placed, 1.0)) {
-            score += 1200;
-          }
+          if (rectsOverlap(cand, placed, 1.0)) score += 1200;
         }
 
         if (score < minScore) {
@@ -715,7 +593,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       placedLabels.push(bestCandidate);
 
-      // Crear etiqueta ultra visible con número de defecto y nombre
       const label = document.createElement('div');
       label.className = `bounding-box-label ${bestCandidate.className}`;
       label.style.borderColor = info.color;
@@ -729,13 +606,11 @@ document.addEventListener('DOMContentLoaded', () => {
       box.appendChild(label);
       detectionOverlay.appendChild(box);
 
-      // Clic en el cuadro enfoca y hace zoom sobre el defecto
       box.addEventListener('click', (e) => {
         e.stopPropagation();
         zoomToDefect(index);
       });
 
-      // Hover interactivo con atenuación de elementos no enfocados
       box.addEventListener('mouseenter', () => {
         detectionOverlay.classList.add('has-hover');
         highlightFinding(index);
@@ -812,21 +687,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </span>
       `;
 
-      // Clic en la fila de la lista hace zoom y centra el defecto
-      itemEl.addEventListener('click', () => {
-        zoomToDefect(idx);
-      });
-
-      // Hover interactivo
-      itemEl.addEventListener('mouseenter', () => {
-        detectionOverlay.classList.add('has-hover');
-        highlightFinding(idx);
-      });
-
-      itemEl.addEventListener('mouseleave', () => {
-        detectionOverlay.classList.remove('has-hover');
-        unhighlightFinding(idx);
-      });
+      itemEl.addEventListener('click', () => zoomToDefect(idx));
+      itemEl.addEventListener('mouseenter', () => { detectionOverlay.classList.add('has-hover'); highlightFinding(idx); });
+      itemEl.addEventListener('mouseleave', () => { detectionOverlay.classList.remove('has-hover'); unhighlightFinding(idx); });
 
       findingsList.appendChild(itemEl);
     });
@@ -834,26 +697,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function highlightFinding(idx) {
     const row = document.getElementById(`finding-row-${idx}`);
-    if (row) {
-      row.style.borderColor = '#38bdf8';
-      row.style.background = 'rgba(56, 189, 248, 0.12)';
-    }
+    if (row) { row.style.borderColor = '#38bdf8'; row.style.background = 'rgba(56, 189, 248, 0.12)'; }
     const box = detectionOverlay.querySelector(`[data-index="${idx}"]`);
-    if (box) {
-      box.classList.add('is-focused');
-    }
+    if (box) box.classList.add('is-focused');
   }
 
   function unhighlightFinding(idx) {
     const row = document.getElementById(`finding-row-${idx}`);
-    if (row) {
-      row.style.borderColor = 'var(--border-subtle)';
-      row.style.background = 'rgba(255, 255, 255, 0.025)';
-    }
+    if (row) { row.style.borderColor = 'var(--border-subtle)'; row.style.background = 'rgba(255, 255, 255, 0.025)'; }
     const box = detectionOverlay.querySelector(`[data-index="${idx}"]`);
-    if (box) {
-      box.classList.remove('is-focused');
-    }
+    if (box) box.classList.remove('is-focused');
   }
 
   function clearDetections() {
@@ -866,14 +719,8 @@ document.addEventListener('DOMContentLoaded', () => {
     resultsContent.classList.add('hidden');
     statusBadge.className = 'status-badge waiting';
     statusBadge.textContent = 'En espera';
-    if (metricVerdictSubtext) {
-      metricVerdictSubtext.textContent = 'En espera';
-      metricVerdictSubtext.className = 'metric-subtext';
-    }
-    if (metricVerdict) {
-      metricVerdict.textContent = '--';
-      metricVerdict.className = 'metric-value';
-    }
+    if (metricVerdictSubtext) { metricVerdictSubtext.textContent = 'En espera'; metricVerdictSubtext.className = 'metric-subtext'; }
+    if (metricVerdict) { metricVerdict.textContent = '--'; metricVerdict.className = 'metric-value'; }
   }
 
   // ==========================================
@@ -892,11 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -904,25 +747,20 @@ document.addEventListener('DOMContentLoaded', () => {
       let currentY = 0;
 
       // 1. Header Banner
-      doc.setFillColor(12, 18, 30); // Deep navy #0c121e
+      doc.setFillColor(12, 18, 30); 
       doc.rect(0, 0, pageWidth, 28, 'F');
-
-      // Top cyan accent line
       doc.setFillColor(0, 242, 254);
       doc.rect(0, 0, pageWidth, 2, 'F');
 
-      // Title & Subtitle
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.setTextColor(255, 255, 255);
       doc.text('PCBVision AI', margin, 13);
-
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
       doc.setTextColor(56, 189, 248);
       doc.text('INFORME TÉCNICO DE INSPECCIÓN ÓPTICA AUTOMATIZADA (AOI)', margin, 19);
 
-      // Audit Stamp on Header Right
       doc.setFont('courier', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(148, 163, 184);
@@ -955,29 +793,25 @@ document.addEventListener('DOMContentLoaded', () => {
       // 3. Status Verdict Banner
       const hasDefects = currentDetections.length > 0;
       if (hasDefects) {
-        doc.setFillColor(254, 242, 242); // Light red
-        doc.setDrawColor(239, 68, 68); // Red border
+        doc.setFillColor(254, 242, 242);
+        doc.setDrawColor(239, 68, 68);
         doc.roundedRect(margin, currentY, pageWidth - (margin * 2), 16, 2, 2, 'FD');
-
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
         doc.setTextColor(220, 38, 38);
         doc.text('ESTADO DEL CIRCUITO: DEFECTUOSA — SE REQUIERE REPARACIÓN', margin + 6, currentY + 7);
-
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(127, 29, 29);
         doc.text(`Se detectaron ${currentDetections.length} anomalía(s) estructural(es). La placa no cumple con los requisitos para ensamble.`, margin + 6, currentY + 12);
       } else {
-        doc.setFillColor(240, 253, 244); // Light green
-        doc.setDrawColor(34, 197, 94); // Green border
+        doc.setFillColor(240, 253, 244);
+        doc.setDrawColor(34, 197, 94);
         doc.roundedRect(margin, currentY, pageWidth - (margin * 2), 16, 2, 2, 'FD');
-
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
         doc.setTextColor(22, 101, 52);
         doc.text('ESTADO DEL CIRCUITO: APROBADA — PLACA EN PERFECTO ESTADO', margin + 6, currentY + 7);
-
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(20, 83, 45);
@@ -991,13 +825,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const cardHeight = 15;
       const metricsData = [
         { label: 'TOTAL ANOMALÍAS', val: `${currentDetections.length}`, color: [239, 68, 68] },
-        { 
-          label: 'CONFIANZA MEDIA', 
-          val: `${((currentDetections.reduce((a, b) => a + b.confidence, 0) / currentDetections.length) * 100).toFixed(1)}%`,
-          color: [2, 132, 199]
-        },
+        { label: 'CONFIANZA MEDIA', val: `${((currentDetections.reduce((a, b) => a + b.confidence, 0) / currentDetections.length) * 100).toFixed(1)}%`, color: [2, 132, 199] },
         { label: 'TIEMPO INFERENCIA', val: `${metricInferenceTime.textContent || '42 ms'}`, color: [16, 185, 129] },
-        { label: 'MODELO IA', val: 'YOLO26', color: [100, 116, 139] }
+        { label: 'MODELO IA', val: 'YOLO26 / Roboflow', color: [100, 116, 139] }
       ];
 
       metricsData.forEach((m, idx) => {
@@ -1005,13 +835,10 @@ document.addEventListener('DOMContentLoaded', () => {
         doc.setFillColor(248, 250, 252);
         doc.setDrawColor(226, 232, 240);
         doc.roundedRect(xPos, currentY, cardWidth, cardHeight, 1.5, 1.5, 'FD');
-
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(6.5);
         doc.setTextColor(100, 116, 139);
         doc.text(m.label, xPos + 4, currentY + 5);
-
-        doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
         doc.setTextColor(m.color[0], m.color[1], m.color[2]);
         doc.text(m.val, xPos + 4, currentY + 12);
@@ -1019,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       currentY += cardHeight + 8;
 
-      // 5. Visual Snapshot of the Inspected PCB (with bounding boxes)
+      // 5. Visual Snapshot of the Inspected PCB
       try {
         const snapshotData = createInspectedImageSnapshot(previewImage, currentDetections);
         if (snapshotData) {
@@ -1029,7 +856,6 @@ document.addEventListener('DOMContentLoaded', () => {
           doc.text('Captura Óptica con Localización de Anomalías:', margin, currentY);
           currentY += 4;
 
-          // Mantener proporción de aspecto natural exacta sin distorsión
           const naturalW = previewImage.naturalWidth || 416;
           const naturalH = previewImage.naturalHeight || 416;
           const imgAspect = naturalW / naturalH;
@@ -1045,7 +871,6 @@ document.addEventListener('DOMContentLoaded', () => {
           doc.rect(margin, currentY, imgBoxWidth, snapshotHeight);
           doc.addImage(snapshotData, 'JPEG', margin, currentY, imgBoxWidth, snapshotHeight);
 
-          // Technical inspection notes on the right of the image
           const infoX = margin + imgBoxWidth + 6;
           const infoW = pageWidth - margin - infoX;
           
@@ -1062,7 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
           doc.setFontSize(7.5);
           doc.setTextColor(71, 85, 105);
           const notesText = [
-            '• Inspección efectuada con modelo neuronal entrenado.',
+            '• Inspección efectuada mediante Roboflow API.',
             '• Cada recuadro refleja la posición exacta de la anomalía.',
             '• Las etiquetas de defectos se posicionan automáticamente sin tapar ningún recuadro.',
             '• Coordenadas (X, Y) normalizadas sobre las dimensiones reales del circuito.'
@@ -1080,7 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('No se pudo incrustar la imagen en el PDF:', err);
       }
 
-      // 6. Defect Details Table (AutoTable)
+      // 6. Defect Details Table
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9.5);
       doc.setTextColor(30, 41, 59);
@@ -1088,21 +913,14 @@ document.addEventListener('DOMContentLoaded', () => {
       currentY += 3;
 
       const severityMap = {
-        short: 'Alta',
-        open_circuit: 'Alta',
-        missing_hole: 'Media',
-        mouse_bite: 'Media',
-        spur: 'Baja',
-        spurious_copper: 'Baja'
+        short: 'Alta', open_circuit: 'Alta', missing_hole: 'Media',
+        mouse_bite: 'Media', spur: 'Baja', spurious_copper: 'Baja'
       };
 
       const tableRows = currentDetections.map((d, index) => {
         const info = DEFECT_INFO[d.class] || { name: d.class };
         return [
-          `#${index + 1}`,
-          info.name,
-          d.class,
-          severityMap[d.class] || 'Media',
+          `#${index + 1}`, info.name, d.class, severityMap[d.class] || 'Media',
           `${(d.confidence * 100).toFixed(1)}%`,
           `X: ${(d.xCenter * 100).toFixed(0)}% | Y: ${(d.yCenter * 100).toFixed(0)}%`
         ];
@@ -1114,19 +932,9 @@ document.addEventListener('DOMContentLoaded', () => {
         body: tableRows,
         margin: { left: margin, right: margin },
         theme: 'striped',
-        headStyles: {
-          fillColor: [12, 18, 30],
-          textColor: [255, 255, 255],
-          fontSize: 8,
-          fontStyle: 'bold'
-        },
-        bodyStyles: {
-          fontSize: 7.5,
-          textColor: [30, 41, 59]
-        },
-        alternateRowStyles: {
-          fillColor: [248, 250, 252]
-        },
+        headStyles: { fillColor: [12, 18, 30], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 7.5, textColor: [30, 41, 59] },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
         columnStyles: {
           0: { cellWidth: 10, halign: 'center' },
           1: { cellWidth: 42, fontStyle: 'bold' },
@@ -1136,25 +944,14 @@ document.addEventListener('DOMContentLoaded', () => {
           5: { cellWidth: 'auto', font: 'courier' }
         },
         didDrawPage: (data) => {
-          // Footer at page bottom
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(7.5);
           doc.setTextColor(148, 163, 184);
-          doc.text(
-            'Documento emitido por PCBVision AI — Control de Calidad en Circuitos Impresos.',
-            margin,
-            pageHeight - 8
-          );
-          doc.text(
-            `Página ${doc.internal.getNumberOfPages()}`,
-            pageWidth - margin,
-            pageHeight - 8,
-            { align: 'right' }
-          );
+          doc.text('Documento emitido por PCBVision AI — Control de Calidad en Circuitos Impresos.', margin, pageHeight - 8);
+          doc.text(`Página ${doc.internal.getNumberOfPages()}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
         }
       });
 
-      // Save PDF file
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
       doc.save(`Reporte_Inspeccion_PCB_${timestamp}.pdf`);
       showToast('Reporte PDF descargado con éxito', 'fa-file-pdf');
@@ -1165,14 +962,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Helper para generar captura nítida con cajas delimitadoras y etiquetas anticolisión para el PDF
   function createInspectedImageSnapshot(imgEl, detections) {
     if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0) return null;
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    // Usar resolución escalada para máxima nitidez en impresión/PDF
     const baseW = imgEl.naturalWidth || 800;
     const baseH = imgEl.naturalHeight || 800;
     const scale = Math.max(1, Math.min(3, Math.round(1200 / Math.max(baseW, baseH))));
@@ -1182,44 +977,24 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.width = width;
     canvas.height = height;
 
-    // 1. Dibujar imagen de fondo de la placa PCB
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(imgEl, 0, 0, width, height);
 
-    if (!detections || detections.length === 0) {
-      return canvas.toDataURL('image/jpeg', 0.94);
-    }
+    if (!detections || detections.length === 0) return canvas.toDataURL('image/jpeg', 0.94);
 
-    // 2. Mapear todas las cajas en píxeles exactos
     const boxesData = detections.map((d, index) => {
       const boxW = d.width * width;
       const boxH = d.height * height;
       const boxX = (d.xCenter * width) - (boxW / 2);
       const boxY = (d.yCenter * height) - (boxH / 2);
-      return {
-        index,
-        x: boxX,
-        y: boxY,
-        width: boxW,
-        height: boxH,
-        right: boxX + boxW,
-        bottom: boxY + boxH,
-        data: d
-      };
+      return { index, x: boxX, y: boxY, width: boxW, height: boxH, right: boxX + boxW, bottom: boxY + boxH, data: d };
     });
 
-    // Función para detectar solapamientos
     function rectsOverlap(r1, r2, padding = 4) {
-      return !(
-        r1.right + padding < r2.x ||
-        r1.x - padding > r2.right ||
-        r1.bottom + padding < r2.y ||
-        r1.y - padding > r2.bottom
-      );
+      return !(r1.right + padding < r2.x || r1.x - padding > r2.right || r1.bottom + padding < r2.y || r1.y - padding > r2.bottom);
     }
 
-    // Función para trazar rectángulos redondeados
     function drawRoundedRect(context, x, y, w, h, radius) {
       context.beginPath();
       context.moveTo(x + radius, y);
@@ -1234,27 +1009,19 @@ document.addEventListener('DOMContentLoaded', () => {
       context.closePath();
     }
 
-    // 3. Dibujar recuadros exactos de defectos
     boxesData.forEach((b) => {
       const d = b.data;
       const info = DEFECT_INFO[d.class] || { name: d.class, color: '#ef4444' };
-
-      // Relleno suave translúcido
       ctx.fillStyle = hexToRgba(info.color, 0.22);
       ctx.fillRect(b.x, b.y, b.width, b.height);
-
-      // Trazo blanco exterior de contraste
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = Math.max(3, Math.round(width * 0.005));
       ctx.strokeRect(b.x - 1, b.y - 1, b.width + 2, b.height + 2);
-
-      // Trazo con color de la anomalía
       ctx.strokeStyle = info.color;
       ctx.lineWidth = Math.max(2, Math.round(width * 0.0035));
       ctx.strokeRect(b.x, b.y, b.width, b.height);
     });
 
-    // 4. Algoritmo Anticolisión Inteligente idéntico al visor interactivo
     const fontSize = Math.max(12, Math.round(width * 0.021));
     const padH = Math.round(fontSize * 0.55);
     const padV = Math.round(fontSize * 0.35);
@@ -1272,74 +1039,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const confText = `${(d.confidence * 100).toFixed(0)}%`;
 
       ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
-      const fullText = numText + nameText + confText;
-      const textW = ctx.measureText(fullText).width;
-
+      const textW = ctx.measureText(numText + nameText + confText).width;
       const labelW = textW + (padH * 2) + (dotRadius * 2) + dotGap;
       const labelH = fontSize + (padV * 2);
 
-      // Candidatos de posición para no tapar los recuadros
       const candidates = [
-        {
-          name: 'top-left',
-          x: b.x,
-          y: b.y - labelH - 4,
-          w: labelW,
-          h: labelH,
-          right: b.x + labelW,
-          bottom: b.y - 4,
-          baseScore: 0
-        },
-        {
-          name: 'bottom-left',
-          x: b.x,
-          y: b.bottom + 4,
-          w: labelW,
-          h: labelH,
-          right: b.x + labelW,
-          bottom: b.bottom + 4 + labelH,
-          baseScore: 4
-        },
-        {
-          name: 'top-right',
-          x: Math.max(0, b.right - labelW),
-          y: b.y - labelH - 4,
-          w: labelW,
-          h: labelH,
-          right: b.right,
-          bottom: b.y - 4,
-          baseScore: 8
-        },
-        {
-          name: 'bottom-right',
-          x: Math.max(0, b.right - labelW),
-          y: b.bottom + 4,
-          w: labelW,
-          h: labelH,
-          right: b.right,
-          bottom: b.bottom + 4 + labelH,
-          baseScore: 12
-        },
-        {
-          name: 'right',
-          x: b.right + 6,
-          y: b.y + (b.height - labelH) / 2,
-          w: labelW,
-          h: labelH,
-          right: b.right + 6 + labelW,
-          bottom: b.y + (b.height - labelH) / 2 + labelH,
-          baseScore: 18
-        },
-        {
-          name: 'left',
-          x: Math.max(0, b.x - labelW - 6),
-          y: b.y + (b.height - labelH) / 2,
-          w: labelW,
-          h: labelH,
-          right: b.x - 6,
-          bottom: b.y + (b.height - labelH) / 2 + labelH,
-          baseScore: 22
-        }
+        { name: 'top-left', x: b.x, y: b.y - labelH - 4, w: labelW, h: labelH, right: b.x + labelW, bottom: b.y - 4, baseScore: 0 },
+        { name: 'bottom-left', x: b.x, y: b.bottom + 4, w: labelW, h: labelH, right: b.x + labelW, bottom: b.bottom + 4 + labelH, baseScore: 4 },
+        { name: 'top-right', x: Math.max(0, b.right - labelW), y: b.y - labelH - 4, w: labelW, h: labelH, right: b.right, bottom: b.y - 4, baseScore: 8 },
+        { name: 'bottom-right', x: Math.max(0, b.right - labelW), y: b.bottom + 4, w: labelW, h: labelH, right: b.right, bottom: b.bottom + 4 + labelH, baseScore: 12 },
+        { name: 'right', x: b.right + 6, y: b.y + (b.height - labelH) / 2, w: labelW, h: labelH, right: b.right + 6 + labelW, bottom: b.y + (b.height - labelH) / 2 + labelH, baseScore: 18 },
+        { name: 'left', x: Math.max(0, b.x - labelW - 6), y: b.y + (b.height - labelH) / 2, w: labelW, h: labelH, right: b.x - 6, bottom: b.y + (b.height - labelH) / 2 + labelH, baseScore: 22 }
       ];
 
       let bestCand = candidates[0];
@@ -1347,26 +1057,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       for (const cand of candidates) {
         let score = cand.baseScore;
-
-        // Fuera de bordes
         if (cand.y < 0) score += 600 + Math.abs(cand.y) * 2;
         if (cand.bottom > height) score += 600 + (cand.bottom - height) * 2;
         if (cand.x < 0) score += 400 + Math.abs(cand.x) * 2;
         if (cand.right > width) score += 400 + (cand.right - width) * 2;
 
-        // NUNCA tapar ningún otro recuadro de defecto (prioridad absoluta)
         for (let j = 0; j < boxesData.length; j++) {
           if (j === index) continue;
-          if (rectsOverlap(cand, boxesData[j], 4)) {
-            score += 3500;
-          }
+          if (rectsOverlap(cand, boxesData[j], 4)) score += 3500;
         }
 
-        // No solaparse con etiquetas ya puestas
         for (const placed of placedLabels) {
-          if (rectsOverlap(cand, placed, 3)) {
-            score += 1500;
-          }
+          if (rectsOverlap(cand, placed, 3)) score += 1500;
         }
 
         if (score < minScore) {
@@ -1377,30 +1079,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
       placedLabels.push(bestCand);
 
-      // Dibujar etiqueta idéntica al resultado interactivo de pantalla
       const lx = bestCand.x;
       const ly = bestCand.y;
       const radius = 4;
 
-      // Sombra
       ctx.save();
       ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
       ctx.shadowBlur = 8;
       ctx.shadowOffsetY = 2;
-
-      // Fondo oscuro nítido
       ctx.fillStyle = 'rgba(8, 12, 22, 0.94)';
       drawRoundedRect(ctx, lx, ly, labelW, labelH, radius);
       ctx.fill();
       ctx.restore();
 
-      // Borde de la etiqueta
       ctx.strokeStyle = info.color;
       ctx.lineWidth = 1.5;
       drawRoundedRect(ctx, lx, ly, labelW, labelH, radius);
       ctx.stroke();
 
-      // Punto indicador circular
       const dotX = lx + padH + dotRadius;
       const dotY = ly + (labelH / 2);
       ctx.beginPath();
@@ -1408,23 +1104,19 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.fillStyle = info.color;
       ctx.fill();
 
-      // Textos
       let textCursorX = dotX + dotRadius + dotGap;
       const textBaseY = ly + (labelH / 2) + (fontSize * 0.35);
 
-      // #Número
       ctx.font = `bold ${fontSize}px 'JetBrains Mono', monospace`;
       ctx.fillStyle = info.color;
       ctx.fillText(numText, textCursorX, textBaseY);
       textCursorX += ctx.measureText(numText).width;
 
-      // Nombre
       ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
       ctx.fillStyle = '#ffffff';
       ctx.fillText(nameText, textCursorX, textBaseY);
       textCursorX += ctx.measureText(nameText).width;
 
-      // Confianza
       ctx.font = `800 ${fontSize}px 'JetBrains Mono', monospace`;
       ctx.fillStyle = info.color;
       ctx.fillText(confText, textCursorX, textBaseY);
@@ -1435,45 +1127,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function hexToRgba(hex, alpha) {
     let c = hex.replace('#', '');
-    if (c.length === 3) {
-      c = c.split('').map(x => x + x).join('');
-    }
+    if (c.length === 3) c = c.split('').map(x => x + x).join('');
     const num = parseInt(c, 16);
-    const r = (num >> 16) & 255;
-    const g = (num >> 8) & 255;
-    const b = num & 255;
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
   }
 
-  // Rerenderizar detecciones al cambiar tamaño de ventana o al cargar la imagen
   window.addEventListener('resize', () => {
-    if (currentDetections.length > 0) {
-      renderDetections(currentDetections);
-    }
+    if (currentDetections.length > 0) renderDetections(currentDetections);
   });
 
   previewImage.addEventListener('load', () => {
-    if (currentDetections.length > 0) {
-      renderDetections(currentDetections);
-    }
+    if (currentDetections.length > 0) renderDetections(currentDetections);
   });
 
-  // ==========================================
-  // Toast Helper
-  // ==========================================
   let toastTimer = null;
   function showToast(msg, iconClass = 'fa-circle-check') {
     const icon = toast.querySelector('.toast-icon');
     const text = toast.querySelector('.toast-msg');
-    
     icon.className = `toast-icon fa-solid ${iconClass}`;
     text.textContent = msg;
     toast.classList.add('show');
-
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-    }, 3200);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
   }
 
   function formatBytes(bytes) {
