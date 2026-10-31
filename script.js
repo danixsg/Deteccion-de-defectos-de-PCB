@@ -6,9 +6,9 @@
 // ==========================================
 // CONFIGURACIÓN DE ROBOFLOW (¡Cámbialo por tus datos!)
 // ==========================================
-const ROBOFLOW_MODEL = "TU_ID_DE_MODELO"; // ej: "pcb-defects-xyz"
+const ROBOFLOW_MODEL = "pcb-defect-detection-hiqyb"; // ej: "pcb-defects-xyz"
 const ROBOFLOW_VERSION = "1";             // Número de versión en Roboflow
-const ROBOFLOW_API_KEY = "TU_API_KEY";    // Tu clave secreta privada de Roboflow
+const ROBOFLOW_API_KEY = "https://serverless.roboflow.com/jovekzharu/workflows/pcb-defect-detection-hiqyb";    // Tu clave secreta privada de Roboflow
 
 document.addEventListener('DOMContentLoaded', () => {
   // Mobile Navigation Elements
