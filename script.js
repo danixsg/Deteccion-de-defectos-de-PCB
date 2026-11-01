@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Marcamos el motor como ONLINE por defecto ya que usamos Roboflow
   const engineState = document.querySelector('.yolo-detector-badge .engine-state');
   if (engineState) {
-    engineState.innerHTML = `<span class="pulse-beacon" style="background:#10b981;box-shadow:0 0 10px #10b981;"></span> API ROBOFLOW`;
+    engineState.innerHTML = `<span class="pulse-beacon" style="background:#10b981;box-shadow:0 0 10px #10b981;"></span> ONLINE`;
   }
 
   btnRunInference.addEventListener('click', async () => {
