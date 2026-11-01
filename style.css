@@ -59,6 +59,7 @@ html {
   scroll-behavior: smooth;
   color-scheme: dark;
   font-size: 16px;
+  overflow-x: hidden;
 }
 
 body {
@@ -2243,67 +2244,187 @@ img, svg {
 /* Mobile Phones (max 600px) */
 @media (max-width: 600px) {
   .container {
-    padding: 0 18px;
+    padding: 0 14px;
   }
 
   .navbar {
-    padding: 10px 0;
+    padding: 8px 0;
+  }
+
+  .nav-container {
+    gap: 8px;
+  }
+
+  .brand-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
   }
 
   .brand-title {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .brand-subtitle {
     display: none;
   }
 
-  /* Compact YOLO26 badge on small mobile screens */
-  .yolo-detector-badge {
-    padding: 5px 9px;
+  .nav-actions {
     gap: 6px;
+  }
+
+  /* Compact YOLO26 badge on mobile */
+  .yolo-detector-badge {
+    padding: 4px 8px;
+    gap: 5px;
   }
 
   .yolo-tag {
     font-size: 11px;
+    gap: 4px;
+  }
+
+  .badge-separator {
+    display: none;
   }
 
   .engine-state .state-label {
     display: none; 
   }
 
+  .mobile-menu-toggle {
+    padding: 6px 10px;
+    font-size: 16px;
+    min-height: 36px;
+    min-width: 36px;
+  }
+
+  /* Hero Section Responsivo */
   .hero-section {
-    padding: 40px 0 60px;
+    padding: 30px 0 45px;
+  }
+
+  .hero-container {
+    gap: 28px;
+  }
+
+  .hero-badge {
+    font-size: 11.5px;
+    padding: 5px 12px;
   }
 
   .hero-title {
-    font-size: 29px;
-    letter-spacing: -0.6px;
+    font-size: clamp(23px, 6.8vw, 30px);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    word-break: break-word;
   }
 
   .hero-description {
-    font-size: 14.5px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin-bottom: 22px;
   }
 
   .hero-cta-group {
     flex-direction: column;
     width: 100%;
+    gap: 10px;
+    margin-bottom: 28px;
   }
 
   .hero-cta-group .btn {
     width: 100%;
+    justify-content: center;
+    padding: 12px 18px;
+    font-size: 14px;
   }
 
   .hero-stats {
-    gap: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    width: 100%;
+  }
+
+  .stat-divider {
+    display: none;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
 
   .stat-number {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .stat-label {
-    font-size: 11px;
+    font-size: 10px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  .hero-visual {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .pcb-preview-card {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .preview-header {
+    padding: 8px 10px;
+  }
+
+  .header-status {
+    font-size: 10.5px;
+  }
+
+  .preview-viewport {
+    border-radius: 8px;
+  }
+
+  /* Catálogo de Defectos Responsivo */
+  .defects-section {
+    padding: 36px 0;
+  }
+
+  .section-header {
+    margin-bottom: 22px;
+  }
+
+  .section-tag {
+    font-size: 11.5px;
+    padding: 4px 10px;
+  }
+
+  .section-title {
+    font-size: clamp(20px, 5.8vw, 26px);
+  }
+
+  .section-subtitle {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .defects-filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .defect-filter-btn {
+    padding: 5px 10px;
+    font-size: 11.5px;
+    border-radius: 20px;
   }
 
   .defect-badge-tag {
@@ -2313,79 +2434,373 @@ img, svg {
 
   .defects-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .defect-card {
+    padding: 16px 14px;
+    border-radius: 12px;
+  }
+
+  .defect-name {
+    font-size: 16px;
+  }
+
+  .defect-desc {
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+
+  .defect-mini-schematic {
+    height: 80px;
+  }
+
+  /* Analizador & Dropzone Responsivo */
+  .analyzer-section {
+    padding: 36px 0;
+  }
+
+  .analyzer-wrapper {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .upload-dropzone {
-    padding: 36px 14px;
-    margin: 12px;
+    padding: 28px 12px;
+    margin: 8px;
+    border-radius: 12px;
   }
 
   .dropzone-icon-ring {
-    width: 64px;
-    height: 64px;
-    font-size: 26px;
-    margin-bottom: 16px;
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
+    margin-bottom: 12px;
   }
 
   .dropzone-title {
-    font-size: 18px;
+    font-size: 16px;
+  }
+
+  .dropzone-hint {
+    font-size: 11.5px;
+    margin-bottom: 14px;
   }
 
   .dropzone-buttons {
     flex-direction: column;
+    width: 100%;
+    gap: 8px;
   }
 
   .dropzone-buttons .btn {
     width: 100%;
+    justify-content: center;
+    padding: 11px 14px;
+    font-size: 13px;
   }
 
+  /* Visor de Inspección y Toolbar Adaptada */
   .viewer-toolbar {
+    padding: 8px 10px;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 8px;
+  }
+
+  .toolbar-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    font-size: 11.5px;
+  }
+
+  .filename-text {
+    max-width: 170px;
   }
 
   .toolbar-actions {
     width: 100%;
-    justify-content: flex-end;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .zoom-controls-wrapper {
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: space-between;
+    padding: 1px;
+    gap: 1px;
+  }
+
+  .tool-btn.zoom-btn {
+    padding: 5px 7px;
+    font-size: 11px;
+  }
+
+  .zoom-level-badge {
+    min-width: 36px;
+    font-size: 10px;
+    padding: 2px 4px;
+  }
+
+  .toolbar-divider {
+    display: none;
+  }
+
+  .toolbar-actions .tool-btn:not(.zoom-btn) {
+    flex: 1 1 calc(33.333% - 6px);
+    justify-content: center;
+    padding: 6px 6px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .viewer-canvas-wrapper {
+    padding: 8px;
+    min-height: 250px;
+    max-height: 360px;
+    border-radius: 6px;
+  }
+
+  .preview-img {
+    max-height: 340px;
+  }
+
+  .canvas-zoom-hint {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 92%;
+    width: max-content;
+    white-space: normal;
+    text-align: center;
+    font-size: 9.5px;
+    padding: 4px 10px;
+    line-height: 1.25;
+  }
+
+  .bounding-box-label {
+    font-size: 9.5px;
+    padding: 2px 5px;
+    gap: 3px;
+    border-width: 1px;
+    border-radius: 3px;
+  }
+
+  .viewer-bottom-bar {
+    padding: 10px 12px;
+  }
+
+  .viewer-bottom-bar .btn {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  /* Panel de Resultados Responsivo */
+  .panel-header {
+    padding: 10px 12px;
+  }
+
+  .panel-title {
+    font-size: 13.5px;
+  }
+
+  .status-badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+  }
+
+  .panel-body {
+    padding: 12px;
   }
 
   .summary-metrics-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 6px;
   }
 
   .metric-box {
-    padding: 10px;
+    padding: 8px;
+  }
+
+  .metric-title {
+    font-size: 10px;
   }
 
   .metric-value {
-    font-size: 16px;
+    font-size: 14.5px;
+  }
+
+  .metric-subtext {
+    font-size: 9.5px;
+  }
+
+  .defect-findings-section {
+    margin-top: 14px;
+  }
+
+  .findings-heading {
+    font-size: 12.5px;
+    margin-bottom: 8px;
+  }
+
+  .findings-list {
+    max-height: 220px;
+    gap: 6px;
+  }
+
+  .finding-item {
+    padding: 8px 10px;
+  }
+
+  .finding-item-name {
+    font-size: 12px;
+  }
+
+  .finding-confidence {
+    font-size: 11px;
+  }
+
+  .btn-download-report {
+    padding: 11px 14px;
+    font-size: 13px;
+  }
+
+  .panel-footer-note {
+    padding: 9px 12px;
+    font-size: 11px;
   }
 
   /* Metodología responsiva para móviles */
+  .process-section {
+    padding: 36px 0;
+  }
+
   .process-steps-grid {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 12px;
+  }
+
+  .step-card {
+    padding: 16px 14px;
+    border-radius: 12px;
+  }
+
+  .step-badge-num {
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+
+  .step-title {
+    font-size: 14.5px;
+  }
+
+  .step-desc {
+    font-size: 12px;
+  }
+
+  .step-chips-group {
+    gap: 6px;
+  }
+
+  .step-chip {
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+
+  /* Footer responsivo */
+  .footer {
+    padding: 30px 0 16px;
   }
 
   .footer-container {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 20px;
+    text-align: center;
+  }
+
+  .footer-brand {
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .footer-tagline {
+    font-size: 12px;
+    max-width: 100%;
+  }
+
+  .footer-links-col {
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
   }
 
   .bottom-content {
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     text-align: center;
+    font-size: 11px;
+  }
+
+  .footer-status-pill {
+    font-size: 10.5px;
+    padding: 4px 10px;
   }
 
   .toast {
-    left: 16px;
-    right: 16px;
-    bottom: 16px;
-    width: calc(100% - 32px);
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: calc(100% - 24px);
+    max-width: none;
+    font-size: 12px;
+    padding: 10px 14px;
     justify-content: center;
+  }
+}
+
+/* Pantallas Extra Pequeñas (max 380px, ej. iPhone SE / dispositivos angostos) */
+@media (max-width: 380px) {
+  .brand-title {
+    font-size: 14.5px;
+  }
+
+  .yolo-detector-badge {
+    padding: 3px 6px;
+  }
+
+  .yolo-tag {
+    font-size: 9.5px;
+  }
+
+  .hero-title {
+    font-size: 22px;
+  }
+
+  .stat-number {
+    font-size: 15px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+  }
+
+  .filename-text {
+    max-width: 120px;
+  }
+
+  .toolbar-actions .tool-btn:not(.zoom-btn) {
+    flex: 1 1 100%;
+  }
+
+  .metric-value {
+    font-size: 13.5px;
   }
 }
 
